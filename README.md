@@ -11,7 +11,7 @@ Currently, work is underway to make the web app more mobile-friendly and add an 
 ## Gallery
 
 ![Input page](./gallery/image.png)
-
+![Output page](./gallery/image1.png)
 
 ## Deploy on Vercel
 
