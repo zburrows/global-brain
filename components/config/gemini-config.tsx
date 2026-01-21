@@ -7,7 +7,6 @@ import {
 
 } from "./taxonomy-config";
 
-//export const apiKey = "AIzaSyA8macvWQaHIFA6dNFsYEfzSsx1lK-tYvk"
 export const model = "gemini-2.5-flash";
 
 export function getEmailContents(author: string, title: string) {
