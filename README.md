@@ -2,7 +2,11 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Overview
 
-Global Brain is a knowledge management system (KMS) for organizing metadata associated with scientific papers. With integration with Google's Gemini API, Global Brain streamlines the metadata generation process. Papers are organized logically, facilitating easy searching and information retrieval. The frontend is implemented with shadcnui, a fluent design library.
+Global Brain is a knowledge management system (KMS) for organizing metadata associated with scientific papers. It supports both document upload and open-access URLs. Using Google's Gemini API, the program generates metadata for each paper, allows users to manually edit the metadata, and finally stores it in a Supabase PostgreSQL database. The web application displays these papers in a separate tab.
+
+## Future work
+
+Currently, work is underway to make the web app more mobile-friendly and add an authentication step.
 
 ## Deploy on Vercel
 
