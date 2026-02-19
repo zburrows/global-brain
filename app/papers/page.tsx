@@ -1,7 +1,7 @@
 "use client";
 import "../globals.css";
 import { useState, useEffect, useMemo } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import { Search, List, LayoutGrid } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -64,11 +64,13 @@ interface PaperEntry {
   metaDescription: string;
   onePageSummary: string;
   [key: string]: any;
+  file: string;
 }
 
 export default function Page() {
   const [papers, setPapers] = useState<PaperEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const testloading = true;
   const [error, setError] = useState<string | null>(null);
   const [selectedPaper, setSelectedPaper] = useState<PaperEntry | null>(null);
   const [listView, setListView] = useState(false);
@@ -105,10 +107,7 @@ export default function Page() {
   const fetchPapers = async () => {
     try {
       setLoading(true);
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-      );
+      const supabase = createClient();
 
       const { data, error: supabaseError } = await supabase
         .from("GlobalBrain")
@@ -461,12 +460,12 @@ export default function Page() {
                     {paper.title || "Untitled"}
                   </CardTitle>
                   <CardDescription className="line-clamp-1">
-                    {`${paper.authors || "Unknown authors"} (${paper.year})`}
+                    {`${paper.authors || "Unknown authors"}${paper.year ? ` (${paper.year})` : ''}`}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm line-clamp-3 overflow-hidden">
-                    {paper.metaDescription.slice(0, paper.metaDescription.lastIndexOf("(")) || "No description available"}
+                    {paper.metaDescription.slice(0, paper.metaDescription.lastIndexOf("(")).endsWith(".") ? paper.metaDescription.slice(0, paper.metaDescription.lastIndexOf("(")) : paper.metaDescription.slice(0, paper.metaDescription.lastIndexOf("(")).trim() + "." || "No description available"}
                   </p>
                 </CardContent>
                 <CardFooter className="content-end flex-wrap gap-3">

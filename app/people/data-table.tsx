@@ -35,75 +35,48 @@ import * as React from "react"
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  pageSize: number
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  pageSize,
 }: DataTableProps<TData, TValue>) {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 20,
   })
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
     state: {
-      sorting,
-      columnFilters,
       pagination,
     },
     onPaginationChange: setPagination,
   })
   React.useEffect(() => {
-    setPagination(prev => ({ ...prev, }))
-  }, [pagination.pageSize])
+    setPagination(prev => ({ ...prev, pageSize }))
+  }, [pageSize])
+
   return (
-    <div className="mx-auto flex justify-center">
-      <div className="flex-1">
-      <div className="flex items-center py-4 gap-6">
-        <Input
-          placeholder="Filter authors..."
-          value={(table.getColumn("author")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("author")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm flex-1"
-        />
-        <div className="flex-1">
-          <Select value={String(pagination.pageSize)} onValueChange={(value) => {
-            pagination.pageSize = Number(value);
-            pagination.pageIndex = 0;
-          }}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select page size"/>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="20">20 results</SelectItem>
-              <SelectItem value="50">50 results</SelectItem>
-              <SelectItem value="100">100 results</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="overflow-hidden rounded-md border">
-        <Table className="table-fixed">
-          <TableHeader>
+    
+    <div>
+      <div className="w-full overflow-hidden rounded-md border">
+        <Table className="table-fixed w-full">
+          <TableHeader className="bg-card">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead 
+                    key={header.id}
+                    style={{
+                      width: (header.column.columnDef as any).meta?.width,
+                      minWidth: (header.column.columnDef as any).meta?.minWidth
+                    }}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -158,7 +131,6 @@ export function DataTable<TData, TValue>({
             Next
           </Button>
         </div>
-      </div>
     </div>
   )
 }

@@ -28,8 +28,8 @@ import { useForm } from "react-hook-form"
 import { GoogleGenAI } from "@google/genai";
 import Firecrawl from '@mendable/firecrawl-js';
 import puppeteer from 'puppeteer';
-import { createClient } from "@supabase/supabase-js";
-import { abstractContents, getPdfContents, urlContents, getEmailContents, getAbstractConfig, pdfConfig, getUrlConfig, emailConfig, model } from "@/components/config/gemini-config";
+import { createClient } from "@/utils/supabase/client";
+import { abstractContents, getPdfContents, getDocxContents, getUrlContents, getEmailContents, getAbstractConfig, pdfConfig, urlConfig, emailConfig, model } from "@/components/config/gemini-config";
 import {
   Dialog,
   DialogContent,
@@ -57,8 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-import { SupabaseAuthClient } from "@supabase/supabase-js/dist/module/lib/SupabaseAuthClient";
+var mammoth = require("mammoth");
 import type { Database } from "@/utils/supabase/index";
 import { NextApiRequest } from "next";
 interface FormState {
@@ -100,10 +99,11 @@ interface AuthorInsert {
   author: string,
   email: string | null,
   papers: number[],
+  tags: string[],
 }
 const apiKey = process.env.NEXT_PUBLIC_GEMINI_KEY;
 const ai = new GoogleGenAI({ apiKey });
-
+const supabase = createClient();
 var formData: FormData = {
   authors: "",
   title: "",
@@ -138,6 +138,8 @@ export default function Page() {
   const [solutionOptions, setSolutionOptions] = useState(solutions);
   const [subcategory, setSubcategory] = useState("None");
   const [subcategoryOptions, setSubcategoryOptions] = useState(subcategories);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
+  
   const maxMetaLength = 155;
   const readFileAsDataURL = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -152,6 +154,19 @@ export default function Page() {
       };
       reader.onerror = (err) => reject(err);
       reader.readAsDataURL(file);
+    })
+  }
+  const readDocx = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      mammoth.convertToHtml(file)
+      .then(function(result: any){
+        const html = result.value; // The generated 
+        resolve(html);
+      })
+      .catch(function(error: any) {
+        console.error(error);
+        reject(new Error(error));
+      });
     })
   }
   const onSubmit = async (data: FormState) => {
@@ -170,11 +185,12 @@ export default function Page() {
     }
     if (!data.abstract && !data.url && data.upload && data.upload.length > 0) { // Document uploaded
       const file = data.upload[0];
+      setCurrentFile(file);
       const base64 = await readFileAsDataURL(file);
       try {
         const response = await ai.models.generateContent({
           model: model,
-          contents: getPdfContents(base64),
+          contents: (file.type == "application/pdf") ? getPdfContents(base64) : getDocxContents(base64),
           config: pdfConfig,
         });
         if (!response.text) {
@@ -370,14 +386,20 @@ export default function Page() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: data.url }),
       });
-
       const r = await res.json();
+      if (r.error) {
+        console.log(r.error)
+        setError("url", {
+          message: r.error
+        })
+      }
       const htmlString = r.content;
+      console.log(htmlString);
       try {
         const response = await ai.models.generateContent({
           model: model,
-          contents: urlContents,
-          config: getUrlConfig(htmlString),
+          contents: getUrlContents(htmlString),
+          config: urlConfig,
         });
         if (!response.text) {
           setError("url", {
@@ -473,8 +495,9 @@ export default function Page() {
       if (tag != "None") { tags.push(tag) };
     }
     toInsert.tags = tags;
+    {currentFile ? (toInsert.file = true) : (toInsert.file = false)};
     setPaperTitle(metadata.title);
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
+    
     const { data: gb_data, error: gb_error } = await supabase.from('GlobalBrain').insert(toInsert).select().single(); // send data to Supabase and return the inserted row
     if(gb_error) {
       setDialogError("submit", {
@@ -484,26 +507,49 @@ export default function Page() {
     }
     
     const { title, author1, email1, author2, email2 } = metadata;
-    console.log(`Email1: ${metadata.email1}`)
-    console.log(`Email2: ${email2}`)
+    if (currentFile) { // if document uploaded, add to database
+      const path = `${gb_data.id}/${title ? (title.replace(/ /g, "_")) : ("Untitled")}.pdf`;
+      const { error: uploadError } = await supabase.storage.from("Documents").upload(path, currentFile); // upload PDF
+      if (uploadError) {
+        setDialogError("submit", {
+          message: `Document upload error: ${uploadError.message}`
+        });
+        return;
+      }
+      const { data: urlData } = await supabase.storage.from("Documents").getPublicUrl(path);
+      console.log(`public URL: ${urlData.publicUrl}, id: ${gb_data.id}`);
+      console.log(`path: ${path}`);
 
+      const { error: fileUrlError } = await supabase.from('GlobalBrain').update({ file: urlData.publicUrl }).eq('id', gb_data.id); // add file url to row
+      if (fileUrlError) {
+        setDialogError("submit", {
+          message: `File URL update error: ${fileUrlError.message}`
+        });
+        return;
+      }
+      setCurrentFile(null);
+    }
     
     if (metadata.author1) { // add to authors database
       const { data: author1_data, error: author1_error } = await supabase.from('authors').select().eq('author', author1);
       if (author1_data!.length > 0) { // entry already exists for author1
-        const newPapers = [...author1_data![0].papers, ...[Number(gb_data.id)]];
-        const { error } = await supabase.from('authors').update({ papers: newPapers }).eq('author', author1); // add new paper id to author
+        const newPapers = [...author1_data![0].papers, ...[Number(gb_data.id)]]; // add new paper ids
+        var tagsToAdd = new Set(author1_data![0].tags);
+        for (const tag of tags) { // add new unique tags
+          tagsToAdd.add(tag);
+        }
+        const { error: paperError } = await supabase.from('authors').update({ papers: newPapers, tags: [...tagsToAdd] }).eq('author', author1); // add new paper id to author
         if (!author1_data![0].email) { // if no email currently exists
           const { error } = await supabase.from('authors').update({ email: metadata.email1 }).eq('author', author1); // add new email to author
         }
       }
-      else {
+      else { // need to create a new entry
         const authorsInsert: AuthorInsert = {
-        author: "",
+        author: author1,
         email: email1 ? email1 : null,
         papers: [Number(gb_data.id)],
+        tags: tags
         };
-        authorsInsert.author = author1;
         const { data, error } = await supabase.from('authors').insert(authorsInsert); // add new entry
       }
     }
@@ -512,18 +558,22 @@ export default function Page() {
       
       if (author2_data!.length > 0) { // entry already exists for author2
         const newPapers = [...author2_data![0].papers, ...[Number(gb_data.id)]]
-        const { error } = await supabase.from('authors').update({ papers: newPapers }).eq('author', author2); // add new paper id to author
+        var tagsToAdd = new Set(author2_data![0].tags);
+        for (const tag of tags) { // add new unique tags
+          tagsToAdd.add(tag);
+        }
+        const { error } = await supabase.from('authors').update({ papers: newPapers, tags: [...tagsToAdd] }).eq('author', author2); // add new paper id to author
         if (!author2_data![0].email) { // if no email currently exists
           const { error } = await supabase.from('authors').update({ email: metadata.email2 }).eq('author', author2); // add new email to author
         }
       }
       else {
         const authorsInsert: AuthorInsert = {
-          author: "",
+          author: author2,
           email: email2 ? email2 : null,
           papers: [Number(gb_data.id)],
+          tags: tags
         };
-        authorsInsert.author = author2;
         const { data, error } = await supabase.from('authors').insert(authorsInsert); // add new entry
       }
     }
@@ -543,7 +593,7 @@ export default function Page() {
           <FieldGroup>
             <Field className="upload-field">
               <FieldLabel htmlFor="upload">Upload documents</FieldLabel>
-              <Input {...register("upload", { onChange: () => clearErrors() })} type="file" accept="application/pdf"/>
+              <Input {...register("upload", { onChange: () => clearErrors() })} type="file" accept="application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document"/>
               <FieldDescription>
                 Supported files: .pdf, .docx
               </FieldDescription>
@@ -833,7 +883,7 @@ export default function Page() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Add more papers</AlertDialogCancel>
-              <Link href="/outputs"><AlertDialogAction>Explore outputs</AlertDialogAction></Link>
+              <Link href="/papers"><AlertDialogAction>Explore entries</AlertDialogAction></Link>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

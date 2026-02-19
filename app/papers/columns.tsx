@@ -30,6 +30,7 @@ export const columns: ColumnDef<Paper>[] = [
     accessorKey: "authors",
     header: "Citation",
     meta: { width: "15%" },
+    cell: ({row}) => <div className="overflow-hidden text-ellipsis">{row.getValue("authors")}</div>
   },
   {
     accessorKey: "year",
