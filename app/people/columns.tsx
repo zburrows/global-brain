@@ -41,6 +41,7 @@ export type Author = {
   author: string
   email: string
   tags: string[]
+  papers: number[]
 }
 
 const supabase = createClient()

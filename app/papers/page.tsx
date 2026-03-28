@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/select";
 
 interface PaperEntry {
-  id: string;
+  id: number;
   authors: string;
   title: string;
   link: string;
@@ -692,7 +692,7 @@ export default function Page() {
                 onClick={() => setSelectedPaper(paper)}
               >
                 <CardHeader className="">
-                  <CardTitle className="line-clamp-2 h-[2.15rem]">
+                  <CardTitle className="line-clamp-2 overflow-hidden">
                     {paper.title || "Untitled"}
                   </CardTitle>
                   <CardDescription className="line-clamp-1">

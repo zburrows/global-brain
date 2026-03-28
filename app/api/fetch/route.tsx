@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
+import puppeteer from "puppeteer-core";
 import { resolve } from "path";
 const chromium = require("@sparticuz/chromium");
 const exePath =

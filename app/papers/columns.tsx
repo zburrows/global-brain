@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 export type Paper = {
+  id: number
   title: string
   authors: string
   year: number
