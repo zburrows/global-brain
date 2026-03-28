@@ -54,8 +54,9 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
+      
     <div className="w-full overflow-hidden rounded-md border">
-      <Table className="table-fixed w-full">
+      <Table className="lg:table-fixed w-full">
         <TableHeader className="bg-card">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
@@ -105,7 +106,8 @@ export function DataTable<TData, TValue>({
         </TableBody>
       </Table>
     </div>
-    <div className="flex items-center justify-end space-x-2 py-4">
+    <div className="flex items-center justify-end space-x-2 pt-3">
+      <div className="text-sm font-medium">{`Showing ${pagination.pageIndex * pagination.pageSize + 1}-${Math.min((pagination.pageIndex * pagination.pageSize + pagination.pageSize), data.length)} of ${data.length}`}</div>
         <Button
           variant="outline"
           size="sm"

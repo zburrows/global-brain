@@ -26,8 +26,6 @@ import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { useForm } from "react-hook-form"
 import { GoogleGenAI } from "@google/genai";
-import Firecrawl from '@mendable/firecrawl-js';
-import puppeteer from 'puppeteer';
 import { createClient } from "@/utils/supabase/client";
 import { abstractContents, getPdfContents, getDocxContents, getUrlContents, getEmailContents, getAbstractConfig, pdfConfig, urlConfig, emailConfig, model } from "@/components/config/gemini-config";
 import {
@@ -71,7 +69,7 @@ interface FormState {
     submit?: { message: string },
   ];
 }
-interface FormData {
+export interface FormData {
   authors: string,
   title: string,
   link: string,
@@ -584,8 +582,8 @@ export default function Page() {
     setIsAlertOpen(true);
   };
   return (
-    <main className="px-4 py-4 sm:px-6 sm:py-8">
-      <h1 className="text-2xl sm:text-3xl md:text-4xl">Add papers to Global Brain</h1>
+    <main className="px-6 md:px-0">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl text-center">Add papers to Global Brain</h1>
       <p className="p-3 text-muted-foreground text-sm sm:text-base">Upload a document to automatically categorize and add it to the database. You can also paste an abstract.</p>
       <div className="flex justify-center overflow-x-hidden">
         <form id="form" onSubmit={handleSubmit(onSubmit)} className="w-full sm:w-md">
@@ -593,9 +591,9 @@ export default function Page() {
           <FieldGroup>
             <Field className="upload-field">
               <FieldLabel htmlFor="upload">Upload documents</FieldLabel>
-              <Input {...register("upload", { onChange: () => clearErrors() })} type="file" accept="application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document"/>
+              <Input {...register("upload", { onChange: () => clearErrors() })} type="file" accept="application/pdf"/>
               <FieldDescription>
-                Supported files: .pdf, .docx
+                Supported files: .pdf
               </FieldDescription>
                 {errors.upload && <FieldError errors={[{ message: errors.upload.message }]}/>}
             </Field>
@@ -628,7 +626,7 @@ export default function Page() {
         </form>
         <form id="dialog-form" onSubmit={handleDialogSubmit(onDialogSubmit)}>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent className="max-w-fit min-w-1/3 h-4/5 w-[95vw] sm:max-w-fit sm:w-auto p-4 sm:p-6">
+            <DialogContent className="min-w-1/3 sm:h-4/5 w-[95vw] sm:max-w-fit sm:w-auto p-4 sm:p-6" onInteractOutside={(event)=>{event.preventDefault()}} onEscapeKeyDown={(event)=>{event.preventDefault()}}>
               <DialogHeader>
                 <DialogTitle>Edit generated metadata</DialogTitle>
                 <DialogDescription>
@@ -861,7 +859,6 @@ export default function Page() {
                     <FieldLabel htmlFor="onePageSummary">One-Page Summary</FieldLabel>
                     <Textarea {...dialogRegister("onePageSummary")} id="onePageSummary" defaultValue={formData.onePageSummary}></Textarea>
                   </Field>
-                  <FieldSeparator/>
                 </FieldGroup>
               </FieldSet>
               <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4">
@@ -883,7 +880,7 @@ export default function Page() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Add more papers</AlertDialogCancel>
-              <Link href="/papers"><AlertDialogAction>Explore entries</AlertDialogAction></Link>
+              <Link href="/papers"><AlertDialogAction className="w-full sm:w-auto">Explore entries</AlertDialogAction></Link>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

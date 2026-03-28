@@ -1,5 +1,4 @@
 "use client";
-import "../globals.css";
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Separator } from "@/components/ui/separator";
@@ -8,6 +7,11 @@ import { ButtonGroup } from "@/components/ui/button-group";
 import { Button } from "@/components/ui/button";
 import { columns, Paper } from "./columns";
 import { DataTable } from "./data-table";
+import {
+  CategoryState,
+  UpdateCategoryState,
+  InitCategoryState
+} from "@/components/config/category-interface"
 import {
   pillars,
   subpillars,
@@ -28,6 +32,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import PaperDialog from "@/components/paper-dialog";
+import EditForm from "@/components/edit-form";
 import {
   InputGroup,
   InputGroupAddon,
@@ -71,14 +76,14 @@ export default function Page() {
   const [papers, setPapers] = useState<PaperEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const testloading = true;
+  const [listView, setListView] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPaper, setSelectedPaper] = useState<PaperEntry | null>(null);
-  const [listView, setListView] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState("10");
   const [cardPage, setCardPage] = useState(0);
   const [numPages, setNumPages] = useState(0);
-  const [sortBy, setSortBy] = useState<"title" | "recent" | "date">("recent");  
+  const [sortBy, setSortBy] = useState<"title" | "recent" | "date">("recent");
   const [selectedPillar, setSelectedPillar] = useState<string>("all");
   const [selectedSubpillar, setSelectedSubpillar] = useState<string>("all");
   const [selectedSolution, setSelectedSolution] = useState<string>("all");
@@ -102,8 +107,11 @@ export default function Page() {
   };
   useEffect(() => {
     fetchPapers();
+    fetchListView();
   }, []);
-
+  const fetchListView = () => {
+    listView ? localStorage.setItem('listView', 'true') : localStorage.setItem('listView', 'false')
+  }
   const fetchPapers = async () => {
     try {
       setLoading(true);
@@ -138,7 +146,9 @@ export default function Page() {
           paper.title?.toLowerCase().includes(query) ||
           paper.authors?.toLowerCase().includes(query) ||
           paper.keyFindings?.toLowerCase().includes(query) ||
-          paper.metaDescription?.toLowerCase().includes(query)
+          paper.metaDescription?.toLowerCase().includes(query) ||
+          paper.author1?.toLowerCase().includes(query) ||
+          paper.author2?.toLowerCase().includes(query)
       );
     }
 
@@ -201,10 +211,10 @@ export default function Page() {
       )}
 
       {/* Search and Filter Controls */}
-      <div className="flex justify-center">
-      <div className="flex flex-col w-5xl gap-4 bg-card p-3 rounded-lg border">
+      <div className="hidden justify-center sm:flex">
+      <div className="flex-col w-5xl gap-4 bg-card p-3 mx-3 rounded-lg border hidden sm:flex"> {/*Search for desktop*/}
         <div className="flex space-x-4 align-middle">
-          <div className="lg:w-3/4 sm:w-1/4 md:w-1/4">
+          <div className="w-3/4">
         <InputGroup>
           <InputGroupInput 
             placeholder="Search by title, authors, findings, or description..."
@@ -246,8 +256,12 @@ export default function Page() {
           </div>
           <div className="flex-initial">
             <ButtonGroup>
-              <Button variant="outline" onClick={() => setListView(true)}><List/></Button>
-              <Button variant="outline" onClick={() => setListView(false)}><LayoutGrid/></Button>
+              <Button variant="outline" onClick={() => {setListView(true)
+                console.log(listView)
+              }}><List/></Button>
+              <Button variant="outline" onClick={() => {setListView(false)
+                console.log(listView)
+              }}><LayoutGrid/></Button>
             </ButtonGroup>
           </div>
         </div>
@@ -413,7 +427,226 @@ export default function Page() {
         </div>
       </div>
       </div>
-    <div className="p-6 max-w-7/8 mx-auto">
+      <div className="bg-card mx-6 p-3 rounded-lg border sm:hidden"> {/*Search for mobile*/}
+        <div className="flex gap-2">
+        <InputGroup className="w-full">
+          <InputGroupInput 
+            placeholder="Search by keyword..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
+        <div className="flex-initial justify-end">
+          <ButtonGroup>
+            <Button variant="outline" onClick={() => {setListView(true)
+              console.log(listView)
+            }}><List/></Button>
+            <Button variant="outline" onClick={() => {setListView(false)
+              console.log(listView)
+            }}><LayoutGrid/></Button>
+          </ButtonGroup>
+        </div>
+        </div>
+          <div className="flex gap-2 py-2">
+            <div className="flex-1 w-1/2">
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as "title" | "recent")}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select sort option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Recently Added</SelectItem>
+                  <SelectItem value="title">Title (A-Z)</SelectItem>
+                  <SelectItem value="date">Publication Date</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 w-1/2">
+              <Select value={pageSize} onValueChange={(value) => {
+                setPageSize(value);
+                setCardPage(0);
+              }}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select page size"/>
+                </SelectTrigger>
+                <SelectContent className="w-1/2">
+                  <SelectItem value="10">10 results</SelectItem>
+                  <SelectItem value="20">20 results</SelectItem>
+                  <SelectItem value="50">50 results</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/*<div className="flex-initial">
+              <ButtonGroup>
+                <Button variant="outline" onClick={() => {setListView(true)
+                  console.log(listView)
+                }}><List/></Button>
+                <Button variant="outline" onClick={() => {setListView(false)
+                  console.log(listView)
+                }}><LayoutGrid/></Button>
+              </ButtonGroup>
+            </div>*/}
+          </div>
+          
+        <Separator />
+        <div className="grid grid-cols-2 gap-2 pt-2">
+        
+        <Select value={selectedPillar} onValueChange={(value: string)=>{
+          setSelectedPillar(value);
+          var subpillarOpts: string[] = [];
+          var solutionOpts: string[] = [];
+          var subcategoryOpts: string[] = [];
+          if (value == "all") {
+            subpillarOpts = subpillars;
+            solutionOpts = solutions;
+            subcategoryOpts = subcategories;
+          }
+          else {
+            for (const subpillar in solutionsData[value]) {
+              subpillarOpts.push(subpillar);
+              for (const solution in solutionsData[value][subpillar]) {
+                solutionOpts.push(solution);
+                for (const subcategory of solutionsData[value][subpillar][solution]) {
+                  subcategoryOpts.push(subcategory);
+                }
+              }
+            }
+          }
+          setSubpillarOptions(subpillarOpts);
+          setSolutionOptions(solutionOpts);
+          setSubcategoryOptions(subcategoryOpts);
+          setSelectedSubpillar("all");
+          setSelectedSolution("all");
+          setSelectedSubcategory("all");
+        }}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Filter by pillar" />
+          </SelectTrigger>
+          <SelectContent className="w-full">
+            <SelectItem value="all">All Pillars</SelectItem>
+            {pillars.map((pillar) => (
+          <SelectItem key={pillar} value={pillar}>
+            {pillar}
+          </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+          
+        <Select value={selectedSubpillar} onValueChange={(value:string)=>{
+          setSelectedSubpillar(value);
+          var solutionOpts: string[] = [];
+          var subcategoryOpts: string[] = [];
+          var pillar = selectedPillar;
+          if (value == "all") {
+            solutionOpts = solutions;
+            subcategoryOpts = subcategories;
+          }
+          else {
+            if (selectedPillar == "all") {
+              for (const pil in solutionsData) {
+                if (value in solutionsData[pil]) {
+                  pillar = pil;
+                }
+              }
+            }
+            for (const sol in solutionsData[pillar][value]) {
+              solutionOpts.push(sol);
+              for (const subcategory of solutionsData[pillar][value][sol]) {
+                subcategoryOpts.push(subcategory);
+              }
+            }
+          }
+          setSolutionOptions(solutionOpts);
+          setSubcategoryOptions(subcategoryOpts);
+          setSelectedSolution("all");
+          setSelectedSubcategory("all");
+        }}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Filter by subpillar" />
+          </SelectTrigger>
+          <SelectContent className="w-full">
+            <SelectItem value="all">All Subpillars</SelectItem>
+            {subpillarOptions.map((subpillar) => (
+          <SelectItem key={subpillar} value={subpillar}>
+            {subpillar}
+          </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedSolution} onValueChange={(value:string)=>{
+          setSelectedSolution(value);
+          var subcategoryOpts: string[] = [];
+          var pillar = selectedPillar;
+          var subpillar = selectedSubpillar;
+          if (value == "all") {
+            subcategoryOpts = subcategories;
+          }
+          else {
+            if (selectedPillar == "all" && selectedSubpillar != "all") { // figure out what the pillar is
+              for (const pil in solutionsData) {
+                if (selectedSubpillar in solutionsData[pil]) {
+                  pillar = pil;
+                  continue;
+                }
+              }
+            }
+            else if (selectedPillar != "all" && selectedSubpillar == "all") { // figure out what the subpillar is
+              for (const sp in solutionsData[selectedPillar]) {
+                if (value in solutionsData[selectedPillar][sp]) {
+                  subpillar = sp;
+                  continue;
+                }
+              }
+            }
+            else if (selectedPillar == selectedSubpillar) { //figure out what the subpillar and pillar are
+              for (const pil in solutionsData) {
+                for (const sp in solutionsData[pil]) {
+                  if (value in solutionsData[pil][sp]) {
+                    pillar = pil;
+                    subpillar = sp;
+                    continue;
+                  }
+                }
+              }
+            }
+            for (const subcategory of solutionsData[pillar][subpillar][value]) {
+              subcategoryOpts.push(subcategory);
+            }
+          }
+          setSubcategoryOptions(subcategoryOpts);
+          setSelectedSubcategory("all");
+        }}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Filter by solution" />
+          </SelectTrigger>
+          <SelectContent className="w-full">
+            <SelectItem value="all">All Solutions</SelectItem>
+            {solutionOptions.map((solution) => (
+          <SelectItem key={solution} value={solution}>
+            {solution}
+          </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Filter by subcategory" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Subcategories</SelectItem>
+            {subcategoryOptions.map((subcategory) => (
+          <SelectItem key={subcategory} value={subcategory}>
+            {subcategory}
+          </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        </div>
+      </div>
+      
+    <div className="p-6 sm:max-w-7/8 max-w-full mx-auto">
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
@@ -436,7 +669,8 @@ export default function Page() {
               : "No papers match your search or filter criteria."}
           </p>
         </div>
-      ) : listView == true? (
+      ) : listView? (
+        <div>
           <DataTable
             columns={columns}
             data={filteredAndSortedPapers}
@@ -445,9 +679,11 @@ export default function Page() {
               <PaperDialog key={paper.id} paper={paper} listView={listView}>{rowElem}</PaperDialog>
             )}
           />
+        </div>
         
       ) : (
         <div>
+          
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {(chunkedPapers[cardPage]).map((paper) => (
             <PaperDialog key={paper.id} paper={paper} listView={listView}>
@@ -464,7 +700,7 @@ export default function Page() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm line-clamp-3 overflow-hidden">
+                  <p className="text-sm line-clamp-6 sm:line-clamp-3 overflow-hidden">
                     {paper.metaDescription.slice(0, paper.metaDescription.lastIndexOf("(")).endsWith(".") ? paper.metaDescription.slice(0, paper.metaDescription.lastIndexOf("(")) : paper.metaDescription.slice(0, paper.metaDescription.lastIndexOf("(")).trim() + "." || "No description available"}
                   </p>
                 </CardContent>
@@ -482,24 +718,25 @@ export default function Page() {
             </PaperDialog>
           ))}
         </div>
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCardPage(cardPage - 1)}
-            disabled={cardPage == 0}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCardPage(cardPage + 1)}
-            disabled={cardPage == numPages - 1}
-          >
-            Next
-          </Button>
-        </div>
+        <div className="flex items-center justify-end space-x-2 py-3">
+            <div className="text-sm font-medium">{`Showing ${cardPage * Number(pageSize) + 1}-${Math.min((cardPage * Number(pageSize) + Number(pageSize)), filteredAndSortedPapers.length)} of ${filteredAndSortedPapers.length}`}</div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCardPage(cardPage - 1)}
+              disabled={cardPage == 0}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCardPage(cardPage + 1)}
+              disabled={cardPage == numPages - 1}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
       </div>

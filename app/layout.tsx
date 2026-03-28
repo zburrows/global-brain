@@ -1,12 +1,13 @@
 import { cookies } from "next/headers";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 import Link from "next/link";
-import TextAlignJustify from "lucide-react";
 import { ModeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button"
+
 import AuthButton from "@/components/auth-button";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 
 import {
@@ -19,6 +20,10 @@ import {
   NavigationMenuTrigger,
   NavigationMenuViewport,
 } from "@/components/ui/navigation-menu"
+import { DesktopNav, MobileNav } from "@/components/nav"
+import { cn } from "@/lib/utils";
+
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,7 +53,7 @@ export default function RootLayout({
   //   });
   // }, []);
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={cn("font-sans", inter.variable)}>
       <head />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
@@ -59,29 +64,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <nav>
-            <div className="w-1/3"></div>
-            <div className="w-1/3 flex justify-center">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuLink href="/">Home</NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink href="/input">Input</NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink href="/papers">Papers</NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink href="/people">People</NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-            </div>
-            <div className="w-1/3 flex justify-end items-center px-2 gap-4"><AuthButton/><ModeToggle/></div>
-          </nav>
+          <MobileNav/>
+          <DesktopNav/>
         {children}
+        <Toaster />
         </ThemeProvider>
       </body>
     </html>

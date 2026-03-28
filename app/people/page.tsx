@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Search, List, LayoutGrid } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Button } from "@/components/ui/button";
-import { columns, Author } from "./columns";
+import { useColumns, Author } from "./columns";
 import { DataTable } from "./data-table";
 import {
   pillars,
@@ -61,9 +61,10 @@ interface AuthorEntry {
   tags: string[];
   [key: string]: any;
 }
-
+const supabase = createClient()
 export default function Page() {
   const [authors, setAuthors] = useState<AuthorEntry[]>([]);
+  const [user, setUser] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const testLoading = true;
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +82,7 @@ export default function Page() {
   const [subpillarOptions, setSubpillarOptions] = useState(subpillars);
   const [solutionOptions, setSolutionOptions] = useState(solutions);
   const [subcategoryOptions, setSubcategoryOptions] = useState(subcategories);
+  const columns = useColumns(user);
   const setGeneralSelection = (selection: string, event: React.MouseEvent<HTMLButtonElement>) => {
     if (pillars.includes(selection)) {
       setSelectedPillar(selection);
@@ -98,16 +100,52 @@ export default function Page() {
   useEffect(() => {
     fetchPapers();
   }, []);
+  useEffect(() => {
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (mounted) {
+          setUser(!!data.user);
+        }
+      } catch (error) {
+        if (mounted) {
+          setUser(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (mounted) {
+          if (event === "SIGNED_IN") {
+            setUser(true);
+          } else if (event === "SIGNED_OUT") {
+            setUser(false);
+          }
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      if (listener?.subscription) {
+        listener.subscription.unsubscribe();
+      }
+    };
+  }, [supabase]);
 
   const fetchPapers = async () => {
     try {
       setLoading(true);
-      const supabase = createClient();
 
       const { data, error: supabaseError } = await supabase
         .from("authors")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
 
       if (supabaseError) {
         setError(supabaseError.message);
@@ -475,6 +513,7 @@ export default function Page() {
           ))}
         </div>
         <div className="flex items-center justify-end space-x-2 py-4">
+          <div className="text-sm font-medium">{`Showing ${cardPage * Number(pageSize) + 1}-${Math.min((cardPage * Number(pageSize) + Number(pageSize)), filteredAndSortedAuthors.length)} of ${filteredAndSortedAuthors.length}`}</div>
           <Button
             variant="outline"
             size="sm"

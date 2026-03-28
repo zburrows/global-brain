@@ -24,13 +24,13 @@ export const columns: ColumnDef<Paper>[] = [
     accessorKey: "title",
     header: "Title",
     meta: { width: "40%" },
-    cell: ({row}) => <div className="whitespace-normal line-clamp-2">{row.getValue("title")}</div>
+    cell: ({row}) => <div className="whitespace-normal">{row.getValue("title")}</div>
   },
   {
     accessorKey: "authors",
     header: "Citation",
     meta: { width: "15%" },
-    cell: ({row}) => <div className="overflow-hidden text-ellipsis">{row.getValue("authors")}</div>
+    cell: ({row}) => <div className="whitespace-normal">{row.getValue("authors")}</div>
   },
   {
     accessorKey: "year",
@@ -41,6 +41,6 @@ export const columns: ColumnDef<Paper>[] = [
     accessorKey: "tags",
     header: "Tags",
     meta: { width: "40%" },
-    cell: ({row}) => (row.getValue("tags") as string[]).join(", ")
+    cell: ({row}) => <div className="whitespace-normal line-clamp-6">{(row.getValue("tags") as string[]).join(", ")}</div>
   }
 ]

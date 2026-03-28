@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { LogoutButton } from "./logout-button";
 import { LoginForm } from "./login-form";
 import { Button } from "./ui/button";
+import { Spinner } from "@/components/ui/spinner"
 import {
   Popover,
   PopoverTrigger,
@@ -55,16 +56,14 @@ export default function AuthButton() {
 
   // Show nothing while loading auth state
   if (user === null) {
-    return (<Button className="w-19"></Button>);
+    return (<Button><Spinner/></Button>);
   }
 
   if (!user) {
     return (
       <Popover>
-        <PopoverTrigger>
-          <Button>
-            Log In
-          </Button>
+        <PopoverTrigger asChild>
+          <Button>Log In</Button>
         </PopoverTrigger>
         <PopoverContent className="p-0 rounded-2xl">
           <LoginForm/>
