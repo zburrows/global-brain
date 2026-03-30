@@ -1,5 +1,5 @@
 import Image from "next/image";
-//import "./globals.css";
+import "./globals.css";
 export default function Page() {
   return (
     <main className="px-6">

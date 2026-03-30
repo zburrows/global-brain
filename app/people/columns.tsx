@@ -89,7 +89,7 @@ export const useColumns = (auth: boolean | null) => {
         if(editMode == row.renderValue('id')) {
           return(<Input {...register('email')} defaultValue={row.getValue('email')}></Input>)
         } else {
-          return(<a className="no-underline hover:underline" href={`mailto:${row.getValue("email")}`} target="_blank" rel="noopener noreferrer">{row.getValue("email")}</a>)
+          return(<a className="no-underline hover:underline overflow-hidden text-ellipsis" href={`mailto:${row.getValue("email")}`} target="_blank" rel="noopener noreferrer">{row.getValue("email")}</a>)
         }
       }
     },
@@ -134,8 +134,8 @@ export const useColumns = (auth: boolean | null) => {
             return(
               <HoverCard>
                 <HoverCardTrigger>
-                  <div className="hover:underline">
-                  {(row.getValue("tags") as string[]).slice(0,3).join(", ") + ", ..."}
+                  <div className="hover:underline overflow-hidden text-ellipsis">
+                  {(row.getValue("tags") as string[]).join(", ")}
                   </div>
                 </HoverCardTrigger>
                 <HoverCardContent>
@@ -147,7 +147,7 @@ export const useColumns = (auth: boolean | null) => {
             )
           }
           else {
-            return (row.getValue("tags") as string[]).slice(0,3).join(", ")
+            return (<div className="overflow-hidden text-ellipsis">{(row.getValue("tags") as string[]).join(", ")}</div>)
           }
         }
       }
@@ -175,7 +175,7 @@ export const useColumns = (auth: boolean | null) => {
         
         return (
           (editMode == row.getValue('id')) ? (
-            <div className="flex gap-2 justify-start">
+            <div className="flex gap-2 justify-start mr-2">
               <Button variant="outline" size={"icon-sm"} disabled={isSubmitting} onClick={handleSubmit(onSubmit)}>{isSubmitting ? <Spinner/> : <Save strokeWidth={1.5} size={20}/>}</Button>
               <Button variant="outline" size={"icon-sm"} onClick={()=>{
                 setEditMode(null)
@@ -183,7 +183,7 @@ export const useColumns = (auth: boolean | null) => {
               }}><CircleX strokeWidth={1.5} size={20}/></Button>
             </div>
           ) : (
-            <div className="flex gap-2 justify-start">
+            <div className="flex gap-2 justify-start mr-2">
             <Button variant="outline" size={"icon-sm"} onClick={()=>{
               setEditMode(row.getValue('id'))
               reset({author: row.getValue('author'), email: row.getValue('email'), tags: row.getValue('tags'), id: row.getValue('id')})
@@ -223,7 +223,7 @@ export const useColumns = (auth: boolean | null) => {
       accessorKey: "email",
       header: "Email",
       meta: { width: "18%" },
-      cell: ({row}: {row: Row<Author>}) => <a className="no-underline hover:underline" href={`mailto:${row.getValue("email")}`} target="_blank" rel="noopener noreferrer">{row.getValue("email")}</a>
+      cell: ({row}: {row: Row<Author>}) => <div className="overflow-hidden text-ellipsis"><a className="no-underline hover:underline" href={`mailto:${row.getValue("email")}`} target="_blank" rel="noopener noreferrer">{row.getValue("email")}</a></div>
     },
     {
       accessorKey: "tags",
@@ -234,8 +234,8 @@ export const useColumns = (auth: boolean | null) => {
           return(
             <HoverCard>
               <HoverCardTrigger>
-                <div className="hover:underline">
-                {(row.getValue("tags") as string[]).slice(0,3).join(", ") + ", ..."}
+                <div className="hover:underline overflow-hidden text-ellipsis">
+                {(row.getValue("tags") as string[]).join(", ")}
                 </div>
               </HoverCardTrigger>
               <HoverCardContent>
@@ -247,7 +247,7 @@ export const useColumns = (auth: boolean | null) => {
           )
         }
         else {
-          return (row.getValue("tags") as string[]).slice(0,3).join(", ")
+          return (<div className="overflow-hidden text-ellipsis">{(row.getValue("tags") as string[]).slice(0,3).join(", ")}</div>)
         }
         
       }

@@ -1,5 +1,7 @@
 "use client";
 import "../globals.css";
+import React from "react"
+import { useWindowSize } from "@uidotdev/usehooks";
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Separator } from "@/components/ui/separator";
@@ -62,14 +64,17 @@ interface AuthorEntry {
   [key: string]: any;
 }
 const supabase = createClient()
+
 export default function Page() {
+  const s = useWindowSize()
+  const initListView: boolean = window.innerWidth >= 640
+  console.log(initListView)
   const [authors, setAuthors] = useState<AuthorEntry[]>([]);
   const [user, setUser] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
-  const testLoading = true;
   const [error, setError] = useState<string | null>(null);
   const [selectedAuthor, setSelectedAuthor] = useState<AuthorEntry | null>(null);
-  const [listView, setListView] = useState(true);
+  const [listView, setListView] = useState(initListView);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState("10");
   const [cardPage, setCardPage] = useState(0);
@@ -215,9 +220,9 @@ export default function Page() {
   }, [filteredAndSortedAuthors, pageSize]);
   return (
     <main>
-      <h1>Explore authors</h1>
+      <h1>Explore people</h1>
       <div className="flex justify-center">
-        <p className="p-3 text-muted-foreground">
+        <p className="p-3 text-muted-foreground text-center">
           Browse authors, contact info, and associated tags
         </p>
       </div>
@@ -228,10 +233,10 @@ export default function Page() {
       )}
 
       {/* Search and Filter Controls */}
-      <div className="flex justify-center">
+      <div className="hidden justify-center sm:flex"> {/* Desktop controls */}
       <div className="flex flex-col w-5xl gap-4 bg-card p-3 rounded-lg border">
         <div className="flex space-x-4 align-middle">
-          <div className="lg:w-3/4 sm:w-1/4 md:w-1/4">
+          <div className="sm:w-3/4">
         <InputGroup>
           <InputGroupInput 
             placeholder="Search by name, email, or tag..."
@@ -439,7 +444,204 @@ export default function Page() {
         </div>
       </div>
       </div>
-    <div className="p-6 max-w-7/8 mx-auto">
+      <div className="bg-card mx-6 p-3 rounded-lg border sm:hidden"> {/*Search for mobile*/}
+        <InputGroup className="w-full">
+          <InputGroupInput 
+            placeholder="Search by keyword..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
+        
+          <div className="flex gap-2 py-2">
+            <div className="flex-1 w-1/2">
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as "name" | "recent")}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select sort option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Recently Added</SelectItem>
+                  <SelectItem value="name">Name (A-Z)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 w-1/2">
+              <Select value={pageSize} onValueChange={(value) => {
+                setPageSize(value);
+                setCardPage(0);
+              }}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select page size"/>
+                </SelectTrigger>
+                <SelectContent className="w-1/2">
+                  <SelectItem value="10">10 results</SelectItem>
+                  <SelectItem value="20">20 results</SelectItem>
+                  <SelectItem value="50">50 results</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+          </div>
+          
+        <Separator />
+        <div className="grid grid-cols-2 gap-2 pt-2">
+        
+        <Select value={selectedPillar} onValueChange={(value: string)=>{
+          setSelectedPillar(value);
+          var subpillarOpts: string[] = [];
+          var solutionOpts: string[] = [];
+          var subcategoryOpts: string[] = [];
+          if (value == "all") {
+            subpillarOpts = subpillars;
+            solutionOpts = solutions;
+            subcategoryOpts = subcategories;
+          }
+          else {
+            for (const subpillar in solutionsData[value]) {
+              subpillarOpts.push(subpillar);
+              for (const solution in solutionsData[value][subpillar]) {
+                solutionOpts.push(solution);
+                for (const subcategory of solutionsData[value][subpillar][solution]) {
+                  subcategoryOpts.push(subcategory);
+                }
+              }
+            }
+          }
+          setSubpillarOptions(subpillarOpts);
+          setSolutionOptions(solutionOpts);
+          setSubcategoryOptions(subcategoryOpts);
+          setSelectedSubpillar("all");
+          setSelectedSolution("all");
+          setSelectedSubcategory("all");
+        }}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Filter by pillar" />
+          </SelectTrigger>
+          <SelectContent className="w-full">
+            <SelectItem value="all">All Pillars</SelectItem>
+            {pillars.map((pillar) => (
+          <SelectItem key={pillar} value={pillar}>
+            {pillar}
+          </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+          
+        <Select value={selectedSubpillar} onValueChange={(value:string)=>{
+          setSelectedSubpillar(value);
+          var solutionOpts: string[] = [];
+          var subcategoryOpts: string[] = [];
+          var pillar = selectedPillar;
+          if (value == "all") {
+            solutionOpts = solutions;
+            subcategoryOpts = subcategories;
+          }
+          else {
+            if (selectedPillar == "all") {
+              for (const pil in solutionsData) {
+                if (value in solutionsData[pil]) {
+                  pillar = pil;
+                }
+              }
+            }
+            for (const sol in solutionsData[pillar][value]) {
+              solutionOpts.push(sol);
+              for (const subcategory of solutionsData[pillar][value][sol]) {
+                subcategoryOpts.push(subcategory);
+              }
+            }
+          }
+          setSolutionOptions(solutionOpts);
+          setSubcategoryOptions(subcategoryOpts);
+          setSelectedSolution("all");
+          setSelectedSubcategory("all");
+        }}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Filter by subpillar" />
+          </SelectTrigger>
+          <SelectContent className="w-full">
+            <SelectItem value="all">All Subpillars</SelectItem>
+            {subpillarOptions.map((subpillar) => (
+          <SelectItem key={subpillar} value={subpillar}>
+            {subpillar}
+          </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedSolution} onValueChange={(value:string)=>{
+          setSelectedSolution(value);
+          var subcategoryOpts: string[] = [];
+          var pillar = selectedPillar;
+          var subpillar = selectedSubpillar;
+          if (value == "all") {
+            subcategoryOpts = subcategories;
+          }
+          else {
+            if (selectedPillar == "all" && selectedSubpillar != "all") { // figure out what the pillar is
+              for (const pil in solutionsData) {
+                if (selectedSubpillar in solutionsData[pil]) {
+                  pillar = pil;
+                  continue;
+                }
+              }
+            }
+            else if (selectedPillar != "all" && selectedSubpillar == "all") { // figure out what the subpillar is
+              for (const sp in solutionsData[selectedPillar]) {
+                if (value in solutionsData[selectedPillar][sp]) {
+                  subpillar = sp;
+                  continue;
+                }
+              }
+            }
+            else if (selectedPillar == selectedSubpillar) { //figure out what the subpillar and pillar are
+              for (const pil in solutionsData) {
+                for (const sp in solutionsData[pil]) {
+                  if (value in solutionsData[pil][sp]) {
+                    pillar = pil;
+                    subpillar = sp;
+                    continue;
+                  }
+                }
+              }
+            }
+            for (const subcategory of solutionsData[pillar][subpillar][value]) {
+              subcategoryOpts.push(subcategory);
+            }
+          }
+          setSubcategoryOptions(subcategoryOpts);
+          setSelectedSubcategory("all");
+        }}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Filter by solution" />
+          </SelectTrigger>
+          <SelectContent className="w-full">
+            <SelectItem value="all">All Solutions</SelectItem>
+            {solutionOptions.map((solution) => (
+          <SelectItem key={solution} value={solution}>
+            {solution}
+          </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Filter by subcategory" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Subcategories</SelectItem>
+            {subcategoryOptions.map((subcategory) => (
+          <SelectItem key={subcategory} value={subcategory}>
+            {subcategory}
+          </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        </div>
+      </div>
+    <div className="p-6 w-full mx-auto">
       {loading ? (
         <div className="w-full overflow-hidden rounded-md border">
           <table className="table-fixed w-full">
@@ -474,7 +676,7 @@ export default function Page() {
               : "No authors match your search or filter criteria."}
           </p>
         </div>
-      ) : listView == true? (
+      ) : listView ? (
           <DataTable
             columns={columns}
             data={filteredAndSortedAuthors}
@@ -483,7 +685,7 @@ export default function Page() {
         
       ) : (
         <div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {(chunkedPapers[cardPage]).map((author) => (
               <Card
                 className="hover:shadow-lg transition-shadow"

@@ -199,7 +199,7 @@ export default function Page() {
     return chunked;
   }, [filteredAndSortedPapers, pageSize]);
   return (
-    <main>
+    <main className="min-w-full">
       <h1>Explore papers</h1>
       <div className="flex justify-center">
         <p className="p-3 text-muted-foreground">
@@ -214,7 +214,7 @@ export default function Page() {
 
       {/* Search and Filter Controls */}
       <div className="hidden justify-center sm:flex">
-      <div className="flex-col w-5xl gap-4 bg-card p-3 mx-3 rounded-lg border hidden sm:flex"> {/*Search for desktop*/}
+      <div className="flex flex-col w-5xl gap-4 bg-card p-3 mx-6 rounded-lg border"> {/*Search for desktop*/}
         <div className="flex space-x-4 align-middle">
           <div className="w-3/4">
         <InputGroup>
@@ -648,11 +648,11 @@ export default function Page() {
         </div>
       </div>
       
-    <div className="p-6 sm:max-w-7/8 max-w-full mx-auto">
+    <div className="p-6 w-full mx-auto">
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <Card key={i} className="w-full h-[16rem]">
+            <Card key={i} className="min-w-full h-[15.6rem]">
               <CardHeader>
                 <Skeleton className="h-6 w-3/4 mb-2" />
                 <Skeleton className="h-4 w-full" />
