@@ -1,6 +1,5 @@
 "use client";
 import "../globals.css";
-import React from "react"
 import { useWindowSize } from "@uidotdev/usehooks";
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
@@ -66,8 +65,10 @@ interface AuthorEntry {
 const supabase = createClient()
 
 export default function Page() {
-  const s = useWindowSize()
-  const initListView: boolean = window.innerWidth >= 640
+  var initListView: boolean = false
+  if (typeof window !=='undefined') {
+    initListView = window.innerWidth >= 640
+  }
   console.log(initListView)
   const [authors, setAuthors] = useState<AuthorEntry[]>([]);
   const [user, setUser] = useState<boolean | null>(null);
