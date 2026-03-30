@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
+import "../globals.css";
+
 import { createClient } from "@/utils/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import { Search, List, LayoutGrid } from "lucide-react";

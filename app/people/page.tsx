@@ -1,5 +1,5 @@
 "use client";
-//import "../globals.css";
+import "../globals.css";
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Separator } from "@/components/ui/separator";

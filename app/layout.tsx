@@ -6,7 +6,7 @@ import { ModeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button"
 
 import AuthButton from "@/components/auth-button";
-//import "./globals.css";
+import "./globals.css";
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 
