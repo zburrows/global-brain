@@ -53,10 +53,10 @@ export default function RootLayout({
   //   });
   // }, []);
   return (
-    <html lang="en" suppressHydrationWarning className={cn("font-sans", inter.variable)}>
+    <html lang="en" suppressHydrationWarning className={`${cn("font-sans", inter.variable)}`}>
       <head />
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col`}
       >
         <ThemeProvider
           attribute="class"
