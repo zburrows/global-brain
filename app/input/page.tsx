@@ -582,9 +582,9 @@ export default function Page() {
     setIsAlertOpen(true);
   };
   return (
-    <main className="px-6 md:px-0">
+    <main className="px-6 md:px-0 min-w-full">
       <h1 className="text-2xl sm:text-3xl md:text-4xl text-center">Add papers to Global Brain</h1>
-      <p className="p-3 text-muted-foreground text-sm sm:text-base">Upload a document to automatically categorize and add it to the database. You can also paste an abstract.</p>
+      <div className="flex justify-center"><p className="p-3 text-muted-foreground text-sm sm:text-base text-center">Upload a document to automatically categorize and add it to the database. You can also paste an abstract.</p></div>
       <div className="flex justify-center overflow-x-hidden">
         <form id="form" onSubmit={handleSubmit(onSubmit)} className="w-full sm:w-md">
         <FieldSet className="w-full">
@@ -615,7 +615,7 @@ export default function Page() {
               </FieldDescription>
               {errors.abstract && <FieldError errors={[{ message: errors.abstract.message }]}/>}
             </Field>
-            <Field orientation="horizontal">
+            <Field orientation="horizontal" className="pb-3">
               <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                 {isSubmitting ? <div className="flex items-center"><Spinner/><div className="px-1">Generating...</div></div> : "Submit"}
               </Button>
@@ -626,7 +626,7 @@ export default function Page() {
         </form>
         <form id="dialog-form" onSubmit={handleDialogSubmit(onDialogSubmit)}>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent className="min-w-1/3 sm:h-4/5 w-[95vw] sm:max-w-fit sm:w-auto p-4 sm:p-6" onInteractOutside={(event)=>{event.preventDefault()}} onEscapeKeyDown={(event)=>{event.preventDefault()}}>
+            <DialogContent className="h-19/20 sm:h-auto min-w-1/3 sm:h-4/5 w-[95vw] sm:max-w-fit sm:w-auto p-4 sm:p-6" onInteractOutside={(event)=>{event.preventDefault()}} onEscapeKeyDown={(event)=>{event.preventDefault()}}>
               <DialogHeader>
                 <DialogTitle>Edit generated metadata</DialogTitle>
                 <DialogDescription>

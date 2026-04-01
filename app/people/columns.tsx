@@ -55,7 +55,6 @@ export const useColumns = (auth: boolean | null) => {
   const [editMode, setEditMode] = useState<number | null>(null)
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<Author>();
   const onSubmit = async (data: Author) => {
-    console.log(data)
     const {error} = await supabase.from('authors').update({author: data.author, email: data.email, tags: data.tags}).eq('id', editMode)
     if (error) {
       toast.error(error.message, { position: 'bottom-center'})
@@ -256,6 +255,7 @@ export const useColumns = (auth: boolean | null) => {
       accessorKey: "actions",
       header: "Actions",
       meta: { width: "8%" },
+      minSize: 50,
       cell: ({row}: {row: Row<Author>}) => {
         const [isDeleting, setIsDeleting] = useState<boolean>(false)
         const [deleteOpen, setDeleteOpen] = useState<boolean>(false)

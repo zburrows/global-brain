@@ -1,7 +1,7 @@
 "use client";
 import "../globals.css";
-import { useWindowSize } from "@uidotdev/usehooks";
 import { useState, useEffect, useMemo } from "react";
+import { SquarePen } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import { Search, List, LayoutGrid } from "lucide-react";
@@ -37,7 +37,6 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "@/components/ui/input-group"
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -45,16 +44,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { AuthorDialog } from "@/components/author-edit-form";
 
-interface AuthorEntry {
+export interface AuthorEntry {
   id: number;
   author: string;
   email: string;
@@ -66,7 +58,7 @@ const supabase = createClient()
 
 export default function Page() {
   var initListView: boolean = false
-  if (typeof window !=='undefined') {
+  if (typeof window !== 'undefined') {
     initListView = window.innerWidth >= 640
   }
   console.log(initListView)
@@ -693,14 +685,25 @@ export default function Page() {
                 onClick={() => setSelectedAuthor(author)}
                 key={author.id}
               >
-                <CardHeader className="">
+                <div className="flex w-full">
+                <CardHeader className="w-3/4">
                   <CardTitle className="">
-                    {author.author || "Unknown"}
+                  {author.author || "Unknown"}
                   </CardTitle>
                   <CardDescription className="line-clamp-1">
-                    {author.email ? (<a href={`mailto:${author.email}`} className="hover:underline">{author.email}</a>) : "Unknown email"}
+                    {author.email && (<a href={`mailto:${author.email}`} className="hover:underline">{author.email}</a>)}
                   </CardDescription>
                 </CardHeader>
+                <div className="flex w-1/4">
+                  <div className="ml-auto px-6">
+                    {user && (
+                      <AuthorDialog  key={author.id} author={author}>
+                        <Button size="icon-sm" variant="outline"><SquarePen/></Button>
+                      </AuthorDialog>
+                      )}
+                  </div>
+                  </div>
+                </div>
                 
                 <CardFooter className="content-end flex-wrap gap-3">
                   {author.tags.map((tag) => (
